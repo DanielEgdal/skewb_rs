@@ -1,10 +1,12 @@
 use base_skewb::Skewb;
+use base_skewb::SkewbLayer;
 use crate::base_skewb::BaseCube;
 
 mod cube_bfs;
 mod base_skewb;
 
 fn main() {
+    // Normal skewb optimal distribution
     let mut t = Skewb::construct();
 
     println!("{:?}", t);
@@ -16,31 +18,22 @@ fn main() {
         println!("Index: {}, Value: {}", index, value);
     }
 
-    // let (t,_) = t.do_scramble("L R L R F R' F' B' L'".to_string());
+    let (t,_) = t.do_scramble("L R L R F R' F' B' L'".to_string());
+
+    // Layer distribution
+
+    let mut t = SkewbLayer::construct();
+
+    println!("{:?}", t);
+
+     let ov = cube_bfs::bfs::<SkewbLayer>();
+
+    // println!("{:?}", ov);
+    for (index, value) in ov.iter().enumerate() {
+        println!("Index: {}, Value: {}", index, value);
+    }
 
 
-    // for i in 0..4{
-    //     for i in 0..2{
-    //         t = t.fp().l();
-    //     }
-
-    //     println!("first {:?}", t);
-    //     for i in 0..2
-    //         {
-    //             t = t.l().bp();
-    //         }
-        
-        
-    //     println!("second {:?}", t);
-    // }
-    // t = t.lp();
-    // println!("{:?}", t);
-
-    // t = t.l();
-    // println!("{:?}", t);
-
-    // t = t.r();
-    // println!("{:?}", t);
 }
 
 

@@ -79,6 +79,14 @@ pub trait BaseCube: Sized {
     const BC_MASK: u64 = blank_pieces_corners(&[Self::DBL,Self::UBR,Self::UFL,Self::UBL],Self::CSIZE_F);
     const BX_MASK: u64 = blank_pieces_centers(&[Self::U,Self::L,Self::B],Self::XSIZE_F);
 
+    const FB_X_MASK: u64 = blank_pieces_centers(&[Self::F,Self::B],Self::XSIZE_F);
+    const RL_X_MASK: u64 = blank_pieces_centers(&[Self::R,Self::L],Self::XSIZE_F);
+
+    const UFRUBL_X_MASK: u64 = blank_pieces_corners(&[Self::UFR,Self::UBL],Self::CSIZE_F);
+    const UFLUBR_X_MASK: u64 = blank_pieces_corners(&[Self::UBR,Self::UFL],Self::CSIZE_F);
+    const DFRDBL_X_MASK: u64 = blank_pieces_corners(&[Self::DFR,Self::DBL],Self::CSIZE_F);
+    const DFLDBR_X_MASK: u64 = blank_pieces_corners(&[Self::DBR,Self::DFL],Self::CSIZE_F);
+
     fn center(&mut self) -> &mut Self::Center;
 
     fn corner(&mut self) -> &mut Self::Corner;
@@ -134,15 +142,35 @@ pub trait BaseCube: Sized {
         let mut block2 = (centers >> (p2 * Self::XSIZE_F)) & blank_x;
         let mut block3 = (centers >> (p3 * Self::XSIZE_F)) & blank_x;
 
-        // println!("xsize: {}", Self::XSIZE_F);
-        // println!("blank: {}", blank_x);
-        // println!("{}", mask);
         centers = centers & mask; 
         centers = centers ^ ((block1 << (p2 * Self::XSIZE_F)) | (block2 << (p3 * Self::XSIZE_F)) |(block3 << (p1 * Self::XSIZE_F)));
-        // println!("{}", centers);
-        // println!("{}", block3);
         centers
     }
+
+    fn two_swap_x(&mut self, p1: usize, p2: usize, mask: Self::Center) -> Self::Center{
+
+        let blank_x = (Self::Center::try_from(2).ok().unwrap()<< (Self::XSIZE_F-1) )-Self::Center::try_from(1).ok().unwrap();
+        let mut centers = *self.center();
+        let mut block1 = (centers >> (p1 * Self::XSIZE_F)) & blank_x;
+        let mut block2 = (centers >> (p2 * Self::XSIZE_F)) & blank_x;
+
+        centers = centers & mask; 
+        centers = centers ^ ((block1 << (p2 * Self::XSIZE_F)) | (block2 << (p1 * Self::XSIZE_F)));
+        centers
+    }
+
+    fn two_swap_c(&mut self, p1: usize, p2: usize, mask: Self::Corner) -> Self::Corner{
+
+        let blank_c = (Self::Corner::try_from(2).ok().unwrap()<< (Self::CSIZE_F-1) )-Self::Corner::try_from(1).ok().unwrap();
+        let mut corners = *self.corner();
+        let mut block1 = (corners >> (p1 * Self::CSIZE_F)) & blank_c;
+        let mut block2 = (corners >> (p2 * Self::CSIZE_F)) & blank_c;
+
+        corners = corners & mask; 
+        corners = corners ^ ((block1 << (p2 * Self::CSIZE_F)) | (block2 << (p1 * Self::CSIZE_F)));
+        corners
+    }
+
 
     fn r(mut self) -> Self {
         *self.center() = self.base_move_x(Self::R,Self::U,Self::B, Self::Center::try_from(Self::RX_MASK).ok().unwrap());
@@ -189,6 +217,17 @@ pub trait BaseCube: Sized {
     fn bp(mut self) -> Self {
         *self.center() = self.base_move_x(Self::U,Self::B,Self::L, Self::Center::try_from(Self::BX_MASK).ok().unwrap());
         *self.corner() = self.base_move_c(Self::DBL,Self::UFL,Self::UBR,Self::UBL, Self::Corner::try_from(Self::BC_MASK).ok().unwrap(), false);
+        self
+    }
+
+    fn y2(mut self) -> Self {
+        *self.center() = self.two_swap_x(Self::F,Self::B, Self::Center::try_from(Self::FB_X_MASK).ok().unwrap());
+        *self.center() = self.two_swap_x(Self::R,Self::L, Self::Center::try_from(Self::RL_X_MASK).ok().unwrap());
+
+        *self.corner() = self.two_swap_c(Self::DBL,Self::DFR, Self::Corner::try_from(Self::DFRDBL_X_MASK).ok().unwrap());
+        *self.corner() = self.two_swap_c(Self::DFL,Self::DBR, Self::Corner::try_from(Self::DFLDBR_X_MASK).ok().unwrap());
+        *self.corner() = self.two_swap_c(Self::UBL,Self::UFR, Self::Corner::try_from(Self::UFRUBL_X_MASK).ok().unwrap());
+        *self.corner() = self.two_swap_c(Self::UFL,Self::UBR, Self::Corner::try_from(Self::UFLUBR_X_MASK).ok().unwrap());
         self
     }
 
@@ -276,6 +315,101 @@ impl Skewb{
 
         Self {
             corners: c,
+            centers: x
+        }
+    }
+}
+
+
+#[derive(Debug,Clone,Copy,Hash,PartialEq,Eq,Ord,PartialOrd)]
+pub struct SkewbLayer{
+    corners: u64,
+    centers: u8,
+}
+
+impl BaseCube for SkewbLayer{
+    const XSIZE: usize = 1;
+    const CSIZE: usize = 3;
+    const CORNER_ORINENTATION: bool = true;
+
+    type Corner = u64;
+    type Center = u8;
+
+    fn center(&mut self) ->  &mut Self::Center {
+        &mut self.centers
+    }
+
+    fn corner(&mut self) -> &mut Self::Corner {
+        &mut self.corners
+    }
+
+    fn new() -> Self{
+        Self {
+            corners: 248276682784,
+            centers: 1,
+        }
+    }
+
+    #[inline(always)]
+    fn base_move_c(&mut self, p1: usize, p2: usize, p3: usize, p4: usize, mask: Self::Corner, clock_wise: bool) -> Self::Corner{
+
+        let blank_c = (Self::Corner::try_from(2).ok().unwrap()<< (Self::CSIZE_F-1) )-Self::Corner::try_from(1).ok().unwrap();
+        let mut corners = *self.corner();
+        let mut block1 = (corners >> (p1 * Self::CSIZE_F)) & blank_c;
+        let mut block2 = (corners >> (p2 * Self::CSIZE_F)) & blank_c;
+        let mut block3 = (corners >> (p3 * Self::CSIZE_F)) & blank_c;
+        let mut block4 = (corners >> (p4 * Self::CSIZE_F)) & blank_c;
+
+        let (t1,t2) = match clock_wise{
+            true => (Self::twist_corner_c as fn(Self::Corner) -> Self::Corner, Self::twist_corner as fn(Self::Corner) -> Self::Corner),
+            false => (Self::twist_corner as fn(Self::Corner) -> Self::Corner, Self::twist_corner_c as fn(Self::Corner) -> Self::Corner),
+        };
+
+        if block1 & 7 != 7{
+            block1 = t1(block1);
+        }
+
+        if block2 & 7 != 7{
+            block2 = t1(block2);
+        }
+
+        if block3 & 7 != 7{
+            block3 = t1(block3);
+        }
+
+        if block4 & 7 != 7{
+            block4 = t2(block4);
+        }
+
+        corners = corners & mask;
+        corners = corners ^ ((block1 << (p2 * Self::CSIZE_F)) | (block2 << (p3 * Self::CSIZE_F)) |(block3 << (p1 * Self::CSIZE_F)) |(block4 << (p4 * Self::CSIZE_F)));
+        corners
+    }
+}
+
+impl SkewbLayer{
+    pub fn construct() -> Self { // The way the numbers in new is calculated
+        let mut c = 0;
+        for i in (0..8).rev(){
+            c = c << Self::CSIZE_F;
+            if [Self::DBL,Self::DFR,Self::DFL,Self::DBR].contains(&i){
+                c += i;
+            }
+            else{
+                c += 7;
+            }
+        }
+        let mut x = 0;
+        for i in (0..6).rev(){
+            x = x << Self::XSIZE_F;
+            if i == Self::D{
+                x += 1;
+            }
+            
+        }
+
+        Self {
+            corners: c as u64,
             centers: x
         }
     }

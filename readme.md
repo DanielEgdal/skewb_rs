@@ -1,1 +1,1 @@
-doesn't currently work
+Because of the notation choice I have used (keeping the D center on bottom at all times), the computing all states is about twice as slow as it should be, due to y2 symetry. It takes roughly 6 seconds. 

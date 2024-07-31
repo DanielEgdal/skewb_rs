@@ -29,7 +29,7 @@ impl<T: BaseCube> CubeBFSHelper <T> {
     }
 }
 
-pub fn bfs<T: BaseCube + Eq + PartialEq + Hash + Clone + Copy >() -> [usize;20]{
+pub fn bfs<T: BaseCube + Eq + PartialEq + Hash + Clone + Copy + std::fmt::Debug  >() -> [usize;20]{
 
     let start_cube = CubeBFSHelper::<T>::new();
     let mut solutions: FxHashMap<T,CubeBFSHelper<T>> = FxHashMap::default();
@@ -43,14 +43,17 @@ pub fn bfs<T: BaseCube + Eq + PartialEq + Hash + Clone + Copy >() -> [usize;20]{
         if i%1_000_000 == 0{
             println!("{},{}",i, solutions.len())
         }
-        if !solutions.contains_key(&nc.cube){ // The very initial state of length 0
+        if !solutions.contains_key(&nc.cube) & !solutions.contains_key(&nc.cube.y2()){ // The very initial state of length 0
             overview[nc.depth as usize] +=1;
             solutions.insert(nc.cube,nc.clone());
         }
 
         for movee in &moves{
             let new_state: &mut CubeBFSHelper<T> = &mut nc.apply_move(*movee);
-            if !solutions.contains_key(&new_state.cube){
+            if !solutions.contains_key(&new_state.cube) & !solutions.contains_key(&new_state.cube.y2()){
+                // if new_state.depth == 7{
+                //     println!("{:?} {:?} {:?}",nc.cube,new_state.cube, new_state.moves);
+                // }
                 overview[new_state.depth as usize] +=1;
                 solutions.insert(new_state.cube,new_state.clone());
                 q.push_back(*new_state);
