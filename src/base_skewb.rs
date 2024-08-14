@@ -270,11 +270,11 @@ pub trait BaseCube: Sized {
                 "b" => 1,
                 "R" => 2,
                 "r" => 5,
-                "U" => 6,
+                "B" => 6,
                 "b'" => 21,
                 "R'" => 22,
                 "r'" => 25,
-                "U'" => 26,
+                "B'" => 26,
                 _ => unreachable!()
             }).collect();
         split_scramble
