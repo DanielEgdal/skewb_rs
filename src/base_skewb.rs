@@ -264,16 +264,17 @@ pub trait BaseCube: Sized {
     }
 
     fn rubiks_skewb_notation_to_moves(&self,scramble:String) -> Vec<u8>{
+        // Note, this is a y off the normal notation. This will keep a sledge in the front. If anything, the other notation should be switched.
         let split_scramble: Vec<_> = scramble.split_ascii_whitespace().map(|f|
             match f {
-                "r" => 1,
-                "U" => 2,
-                "R" => 5,
-                "b" => 6,
-                "r'" => 21,
-                "U'" => 22,
-                "R'" => 25,
-                "b'" => 26,
+                "b" => 1,
+                "R" => 2,
+                "r" => 5,
+                "U" => 6,
+                "b'" => 21,
+                "R'" => 22,
+                "r'" => 25,
+                "U'" => 26,
                 _ => unreachable!()
             }).collect();
         split_scramble
@@ -370,7 +371,6 @@ impl Skewb{
         corner = "0".repeat((Self::CSIZE_F*8)- corner.len()) + &corner;
         let mut i_corners = 0;
         while i_corners < (Self::CSIZE_F*8)-1{
-            println!("{}",i_corners);
             let co_str = &corner[i_corners..i_corners+2];  
             let co_id = u32::from_str_radix(co_str, 2).expect("string only consists of binary");
 
@@ -380,8 +380,6 @@ impl Skewb{
             let c1 = CORNER_MAP[piece_id as usize][((co_id)%3) as usize];
             let c2 = CORNER_MAP[piece_id as usize][((co_id+1)%3) as usize];
             let c3 = CORNER_MAP[piece_id as usize][((co_id+2)%3) as usize];
-
-            println!("{},{}",piece_str,piece_id);
 
             if i_corners == 35{
                 cube_colours[5][3] = c1;
