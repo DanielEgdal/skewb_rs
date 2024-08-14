@@ -11,16 +11,20 @@ fn main() {
 
     println!("{:?}", t);
 
-    let ov = cube_bfs::bfs::<Skewb>();
-
-    // println!("{:?}", ov);
-    for (index, value) in ov.iter().enumerate() {
-        println!("Index: {}, Value: {}", index, value);
-    }
-
-    let (t,_) = t.do_scramble("L R L R F R' F' B' L'".to_string());
-
-    // Layer distribution
+    
+    // let ov = cube_bfs::bfs::<Skewb>();
+    
+    // // println!("{:?}", ov);
+    // for (index, value) in ov.iter().enumerate() {
+        //     println!("Index: {}, Value: {}", index, value);
+        // }
+        
+        let t = t.do_scramble("L R L R F R' F' B' L'".to_string());
+        // let t = t.do_scramble("L".to_string());
+        
+        // let a = t.get_colours();
+        // println!("{:?}",a);
+    // // Layer distribution
 
     let mut t = SkewbLayer::construct();
 

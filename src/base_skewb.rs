@@ -49,10 +49,10 @@ pub trait BaseCube: Sized {
     const UBL: usize = 7;
 
     const D: usize = 0;
-    const F: usize = 1;
+    const B: usize = 1;
     const R: usize = 2;
-    const L: usize = 3;
-    const B: usize = 4;
+    const F: usize = 3;
+    const L: usize = 4;
     const U: usize = 5;
 
     const XSIZE: usize;
@@ -247,7 +247,7 @@ pub trait BaseCube: Sized {
         self
     }
 
-    fn do_scramble(mut self, scramble:String) -> (Self,Vec<u8>) where Self: Debug {
+    fn scramble_to_moves(&self,scramble:String) -> Vec<u8>{
         let split_scramble: Vec<_> = scramble.split_ascii_whitespace().map(|f|
             match f {
                 "R" => 1,
@@ -260,12 +260,32 @@ pub trait BaseCube: Sized {
                 "B'" => 26,
                 _ => unreachable!()
             }).collect();
+        split_scramble
+    }
+
+    fn rubiks_skewb_notation_to_moves(&self,scramble:String) -> Vec<u8>{
+        let split_scramble: Vec<_> = scramble.split_ascii_whitespace().map(|f|
+            match f {
+                "r" => 1,
+                "U" => 2,
+                "R" => 5,
+                "b" => 6,
+                "r'" => 21,
+                "U'" => 22,
+                "R'" => 25,
+                "b'" => 26,
+                _ => unreachable!()
+            }).collect();
+        split_scramble
+    }
+
+    fn do_scramble(mut self, scramble:String) -> Self where Self: Debug {
+        let split_scramble = &self.scramble_to_moves(scramble);
     
-        for movei in &split_scramble{
+        for movei in split_scramble{
             self = self.perform_move(*movei);
-            println!("{}, {:?}",movei, self)
         }
-        (self, split_scramble)
+        self
     }
     
 }
@@ -317,6 +337,103 @@ impl Skewb{
             corners: c,
             centers: x
         }
+    }
+
+    pub fn get_colours(&self) -> [[&'static str; 5]; 6]{
+        // Result is the first four colours being corners, top left, top right, bottom left, bottom right. The 5th being the centre. Sides per comment below.
+        let colours = ["yellow","blue","red","green","orange","white"]; // ["white","orange","green","red","blue","yellow"]; The actual order of the sides
+        let mut cube_colours = [[""; 5]; 6];
+        let mut center = format!("{:b}", self.centers);
+        center = "0".repeat((Self::XSIZE*6)- center.len()) + &center;
+        let mut i_centers = 0;
+        let mut curr_side = 0;
+        while i_centers < (Self::XSIZE*6)-1{
+            let piece_str = &center[i_centers..i_centers+(Self::XSIZE)];  
+            let piece_id = u32::from_str_radix(piece_str, 2).expect("string only consists of binary");
+            cube_colours[curr_side][4] = colours[piece_id as usize];
+            curr_side+=1;
+            i_centers += Self::XSIZE;
+        }
+
+        // Below is horribly hardcoded...
+        const CORNER_MAP: [[&str; 3]; 8] = [
+            ["yellow", "blue", "red"],
+            ["yellow", "orange", "blue"],
+            ["yellow", "red", "green"],
+            ["yellow", "green", "orange"],
+            ["white", "green", "red"],
+            ["white", "orange", "green"],
+            ["white", "red", "blue"],
+            ["white", "blue", "orange"]];
+
+        let mut corner = format!("{:b}", self.corners);
+        corner = "0".repeat((Self::CSIZE_F*8)- corner.len()) + &corner;
+        let mut i_corners = 0;
+        while i_corners < (Self::CSIZE_F*8)-1{
+            println!("{}",i_corners);
+            let co_str = &corner[i_corners..i_corners+2];  
+            let co_id = u32::from_str_radix(co_str, 2).expect("string only consists of binary");
+
+            let piece_str = &corner[i_corners+2..i_corners+Self::CSIZE_F];  
+            let piece_id = u32::from_str_radix(piece_str, 2).expect("string only consists of binary");
+
+            let c1 = CORNER_MAP[piece_id as usize][((co_id)%3) as usize];
+            let c2 = CORNER_MAP[piece_id as usize][((co_id+1)%3) as usize];
+            let c3 = CORNER_MAP[piece_id as usize][((co_id+2)%3) as usize];
+
+            println!("{},{}",piece_str,piece_id);
+
+            if i_corners == 35{
+                cube_colours[5][3] = c1;
+                cube_colours[4][2] = c2;
+                cube_colours[3][3] = c3;
+            }
+            else if i_corners == 30{
+                cube_colours[5][2] = c1;
+                cube_colours[1][2] = c2;
+                cube_colours[4][3] = c3;
+            }
+
+            else if i_corners == 25{
+                cube_colours[5][1] = c1;
+                cube_colours[3][2] = c2;
+                cube_colours[2][3] = c3;
+            }
+
+            else if i_corners == 20{
+                cube_colours[5][0] = c1;
+                cube_colours[2][2] = c2;
+                cube_colours[1][3] = c3;
+            }
+
+            else if i_corners == 15{
+                cube_colours[0][3] = c1;
+                cube_colours[2][1] = c2;
+                cube_colours[3][0] = c3;
+            }
+
+            else if i_corners == 10{
+                cube_colours[0][2] = c1;
+                cube_colours[1][1] = c2;
+                cube_colours[2][0] = c3;
+            }
+
+            else if i_corners == 5{
+                cube_colours[0][1] = c1;
+                cube_colours[3][1] = c2;
+                cube_colours[4][0] = c3;
+            }
+
+            else if i_corners == 0{
+                cube_colours[0][0] = c1;
+                cube_colours[4][1] = c2;
+                cube_colours[1][0] = c3;
+            }
+            i_corners += Self::CSIZE_F;
+        }
+
+        // cube_colours.reverse();
+        cube_colours
     }
 }
 
